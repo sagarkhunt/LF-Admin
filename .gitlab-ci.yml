@@ -1,0 +1,16 @@
+stages:
+  - development
+Development:
+  stage: development
+  only:
+    - development
+  before_script:
+    - "command -v ssh-agent >/dev/null || ( apk add --update openssh )"
+    - eval $(ssh-agent -s)
+    - echo "$DEV_SSH_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan $DEV_SERVER_HOST >> ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+  script:
+    - ssh -o StrictHostKeyChecking=no $DEV_USER_NAME@$DEV_SERVER_HOST "cd $DEV_PATH && git fetch origin development && git checkout development && git pull origin development && cp -r .env.dev .env && yarn install && yarn build && cp -r .htaccess build/ && exit"
